@@ -12,19 +12,28 @@ const getDataFromApi = () => {
     });
     res.on('end', () => {
       const newData = JSON.parse(data);
-      const filteredData = newData.list.map((el) => ({
+      const filteredData = newData.list.map((el) =>({
         name: el.name,
         weather: el.weather,
-      }));
-      console.log(filteredData);
+      }))
+    
+     
+      
       const fb = path.join(__dirname, 'countries.js');
       fs.writeFile(fb, JSON.stringify(filteredData), (err) => {
         console.log(err);
       });
-    });
-  }).on('error', (err) => {
+    
+  });
+  res.on('error', (err) => {
     console.log(`Error: ${err.message}`);
   });
-};
+
+})};
+
 
 module.exports = { getDataFromApi };
+
+
+
+

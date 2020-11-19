@@ -4,7 +4,7 @@ const path = require('path');
 const querystring = require('querystring');
 
 const getDataFromApi = () => {
-  http.get('http://api.openweathermap.org/data/2.5/box/city?bbox=12,32,15,37,10&appid=c34ef7da8cfdcd8fbc8e46dc4119e1b0&', (res) => {
+  http.get(`http://api.openweathermap.org/data/2.5/box/city?bbox=12,32,15,37,10&appid=${process.env.API_KEY}`, (res) => {
     let data = '';
 
     res.on('data', (chunk) => {
@@ -18,7 +18,6 @@ const getDataFromApi = () => {
       }));
       console.log(filteredData);
       const fb = path.join(__dirname, 'countries.js');
-      //   const filteredDta = newData
       fs.writeFile(fb, JSON.stringify(filteredData), (err) => {
         console.log(err);
       });

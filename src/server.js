@@ -1,33 +1,16 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const env = require('env2')('src/env.json');
 const querystring = require('querystring');
+// const env = require('env2')('src/env.json');
+const { getDataFromApi } = require('./data');
+const { apiData } = require('./countries');
 
-const getDataFromApi = () => {
-  http.get(`http://api.openweathermap.org/data/2.5/weather?q=gaza&appid=${process.env.api_key}`, (res) => {
-    let data = '';
-
-    res.on('data', (chunk) => {
-      data += chunk;
-    });
-    res.on('end', () => {
-      const newData = querystring.parse(data); // obj
-      console.log(newData);
-      const fb = path.join(__dirname, 'countries.json');
-      fs.writeFile(fb, JSON.stringify(newData), (err) => {
-        console.log(err);
-      });
-    });
-  }).on('error', (err) => {
-    console.log(`Error: ${err.message}`);
-  });
-};
-
-getDataFromApi();
+// getDataFromApi();
 
 const router = (request, response) => {
   const endpoint = request.url;
+  const requestMethod = request.method;
   if (endpoint === '/') {
     const filePath = path.join(__dirname, '..', 'public', 'index.html');
     fs.readFile(filePath, (error, file) => {
@@ -42,9 +25,13 @@ const router = (request, response) => {
   } else if (path.extname(endpoint)) {
     const extention = path.extname(endpoint);
     const extensionType = {
+      '.html': 'text/html',
       '.css': 'text/css',
-      '.js': 'text/javascript',
+      '.js': 'application/javascript',
+      '.json': 'application/json',
       '.ico': 'image/x-icon',
+      '.png': 'image/png',
+      '.jpg': 'image/jpg',
     };
     const filePath = path.join(__dirname, '..', 'public', endpoint);
     fs.readFile(filePath, (error, file) => {
@@ -56,6 +43,33 @@ const router = (request, response) => {
         response.end(file);
       }
     });
+  } else if (endpoint === '/search-countries' && requestMethod === 'POST') {
+    let data = '';
+
+    request.on('data', (chunk) => {
+      data += chunk;
+    });
+    request.on('end', () => {
+      const newData = querystring.parse(data);
+      const city = newData;
+      const letter = city.post.slice(0, 1).toUpperCase();
+      const autocompleteResult = apiData.filter((item) => item.name.slice(0, 1) === letter);
+      console.log(autocompleteResult);
+
+      // console.log(newData.list.length);
+      // const filteredData = newData.list.map((el) => ({
+      //   name: el.name,
+      //   weather: el.weather,
+      // }));
+      // console.log(filteredData);
+      // const fb = path.join(__dirname, );
+      // fs.writeFile(fb, JSON.stringify(filteredData), (err) => {
+      //   console.log(err);
+      // });
+    });
+    request.on('error', (err) => {
+      console.log(`Error: ${err.message}`);
+    });
   } else {
     response.writeHead(404, { 'Content-Type': 'text/html' });
     response.end('<h1>page not found 404</h1>');
@@ -63,9 +77,10 @@ const router = (request, response) => {
 };
 
 const server = http.createServer(router);
-const { port } = process.env;
+const port = process.env.PORT || 4000;
 
 server.listen(port, () => {
   // eslint-disable-next-line no-console
   console.log('hello from port 4000');
 });
+module.exports = { http, fs, path };
